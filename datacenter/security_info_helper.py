@@ -5,15 +5,21 @@ from datetime import datetime, timezone
 def get_duration(visit):
     entry_time = localtime(visit.entered_at)
     date_now = localtime(datetime.now(timezone.utc))
-    different = date_now - entry_time
+    if visit.leaved_at:
+        different = date_now - entry_time
+    else:
+        different = visit.entered_at
     return different
 
 
 def format_time(duration):
-    time = duration.seconds
-    hours = time // 3600
-    minutes = (time % 3600) // 60
-    seconds = time % 60
+    time = duration.total_seconds()
+    seconds_in_hour = 3600
+    seconds_in_minute = 60
+    minute_in_hour = 60
+    hours = time // seconds_in_hour
+    minutes = (time % seconds_in_hour) // minute_in_hour
+    seconds = time % seconds_in_minute
     return f'{hours}:{minutes}:{seconds}'
 
 
@@ -22,8 +28,9 @@ def is_visit_long(visit, minutes=60):
         delta = visit.leaved_at - visit.entered_at
     else:
         delta = visit.entered_at
-    seconds = delta.seconds
-    delta_minutes = (seconds % 3600) // 60
-    if delta_minutes > minutes:
-        return True
-    return False
+    seconds = delta.total_seconds()
+    seconds_in_hour = 3600
+    seconds_in_minute = 60
+    delta_minutes = ((seconds % seconds_in_hour) // seconds_in_minute) > minutes
+    return delta_minutes
+
